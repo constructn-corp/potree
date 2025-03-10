@@ -403,6 +403,9 @@ export class OrientedImageLoader {
       const newCamPos = image.position.clone();
       const newCamTarget = mesh.position.clone();
 
+      let _isThumbnailLoaded = false;
+      let _isMainLoaded = false ;
+
       viewer.scene.view.setView(newCamPos, newCamTarget);
 
 
@@ -432,9 +435,17 @@ export class OrientedImageLoader {
       }
 
       viewer.scene.orientedImages[0].focused = image;
+      const loadingPath = `${Potree.resourcePath}/images/loading.jpg`;
+      let loadingTexture = await loadImageTexture(loadingPath);
+      if(!_isThumbnailLoaded){
+      updateTexture(loadingTexture);
+      }
       const tmpImagePath = `${imagesPath}/thumbnails/${target.id}`;
       let texture = await loadImageTexture(tmpImagePath);
-      updateTexture(texture);
+      _isThumbnailLoaded = true ;
+      if(!_isMainLoaded){
+        updateTexture(texture);
+      }
       if (sendEvent) {
         const event = new CustomEvent("imageLoad", {
           detail: {
@@ -449,6 +460,7 @@ export class OrientedImageLoader {
       // }, 100);
       const imagePath = `${imagesPath}/${target.id}`;
       let texture_org = await loadImageTexture(imagePath);
+      _isMainLoaded=true;
       updateTexture(texture_org);
       image.texture = texture_org;
     };
