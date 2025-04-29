@@ -56,7 +56,7 @@ export class Images360 extends EventDispatcher{
 				this.focus(this.currentlyHovered.image360);
 				const event = new CustomEvent("onRingClick", {
                     detail: {
-                        viewer: this.viewer.canvasId,
+                        viewer: this.viewer,
                         image: this.currentlyHovered.image360
                     }
                 });
@@ -68,7 +68,7 @@ export class Images360 extends EventDispatcher{
 				// this.focus(this.currentlyHovered.image360);
 				const event = new CustomEvent("onRingClick", {
                     detail: {
-                        viewer: this.viewer.canvasId,
+                        viewer: this.viewer,
                         image: this.currentlyHovered.image360
                     }
                 });
