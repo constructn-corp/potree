@@ -232,7 +232,7 @@ export class OrientedImageLoader {
     return [params, imageParams];
   }
 
-  static async load(imageParamsPath, imagesPath, viewer, tm_data, isLocal = false) {
+  static async load(imageData, imagesPath, viewer, tm_data, isLocal = false) {
     const tStart = performance.now();
 
     let tmatrix, toffset;
@@ -241,7 +241,7 @@ export class OrientedImageLoader {
     toffset = tm_data.offset;
 
     const [cameraParams, imageParams] =
-      await OrientedImageLoader.loadImageParams(imageParamsPath, tmatrix, isLocal);
+    OrientedImageLoader.loadImageParamsFromData(imageData);
 
     const orientedImageControls = new OrientedImageControls(viewer);
     const raycaster = new THREE.Raycaster();
@@ -291,7 +291,6 @@ export class OrientedImageLoader {
 
     const images = new OrientedImages();
     images.node = sceneNode;
-    images.imageParamsPath = imageParamsPath;
     images.cameraParams = cameraParams;
     images.imageParams = imageParams;
     images.images = orientedImages;
@@ -529,5 +528,39 @@ export class OrientedImageLoader {
       orientedImageControls.release();
     };
     return images;
+  }
+  static loadImageParamsFromData(imageData) {
+    const imageParams = [];
+  let width;
+  let height;
+  let f;
+
+  Object.keys(imageData).forEach((key)=>{
+      const params = {
+        id: key,
+        x: imageData[key].position[0],
+        y: imageData[key].position[1],
+        z: imageData[key].position[2],
+        x_tm: imageData[key].position[0],
+        y_tm: imageData[key].position[1],
+        z_tm: imageData[key].position[2],
+        omega: Number.parseFloat(imageData[key].rotation[0]),
+        phi: Number.parseFloat(imageData[key].rotation[1]),
+        kappa: Number.parseFloat(imageData[key].rotation[2]),
+      };
+    width = parseInt(imageData[key].camPix[0]);
+      height = parseInt(imageData[key].camPix[1]);
+      f = parseFloat(imageData[key].camFocal);
+      imageParams.push(params);
+    });
+    let a = height / 2 / f;
+    let fov = 2 * MathUtils$1.radToDeg(Math.atan(a));
+    const params = {
+      width: width,
+      height: height,
+      f: f,
+      fov: fov,
+    };
+    return [params, imageParams];
   }
 }

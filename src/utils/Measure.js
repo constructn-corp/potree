@@ -303,11 +303,11 @@ export class Measure extends THREE.Object3D {
 
 		this.sphereGeometry = new THREE.SphereGeometry(0.4, 10, 10);
 		this.lineMaterial = new LineMaterial({
-			color: 0xff0000, 
+			color: 0x6941C6, 
 			linewidth: 2, 
 			resolution:  new THREE.Vector2(1000, 1000),
 		});
-		this.color = new THREE.Color(0xff0000);
+		this.color = new THREE.Color(0x6941C6);
 
 		this.spheres = [];
 		this.edges = [];
