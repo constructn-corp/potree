@@ -44,7 +44,7 @@ export class OrbitControls extends EventDispatcher {
     this.changeEvent = new CustomEvent("camerachange");
 
     let drag = (e) => {
-      if (e.drag.object !== null) {
+      if (e.drag.object !== null || !this.enabled) {
         return;
       }
 

@@ -44,8 +44,9 @@ export class Images360 extends EventDispatcher{
 			target: null,
 		};
 		this.raycaster = new THREE.Raycaster();
+		this.showRings = true;
 		this.hoverMaterial = new THREE.MeshBasicMaterial({side: THREE.DoubleSide,color:''});
-		this.sm = new THREE.MeshBasicMaterial({side: THREE.DoubleSide,color:'#c03624'});
+		this.sm = new THREE.MeshBasicMaterial({side: THREE.DoubleSide,color:'#6941c6'});
 		viewer.addEventListener("update", () => {
 			this.update(viewer);
 		});
@@ -99,7 +100,7 @@ export class Images360 extends EventDispatcher{
 		return this._visible;
 	}
 
-	focus(image360, reversePan = false, sendEvent = true, inTarget = null){
+	focus(image360, reversePan = false, sendEvent = true, inTarget = null, onImageLoaded){
 		if(this.focusedImage !== null){
 			this.unfocus();
 		}
@@ -203,6 +204,7 @@ export class Images360 extends EventDispatcher{
 				this.sphere.visible = true;
 				this.sphere.material.map = image360.texture;
 				this.sphere.material.needsUpdate = true;
+				onImageLoaded && onImageLoaded();
 			}
 		});
 			let {course, pitch, roll} = image360;
@@ -376,11 +378,7 @@ export class Images360Loader{
 		let text = await response.text();
 		let imgData = JSON.parse(text);
 
-		if (!this.instance) {
-			this.instance = new Images360(viewer);
-		}
-
-		let images360 = this.instance;
+		let images360 = new Images360(viewer);
 
 		Object.keys(imgData).forEach(imgName => {
 			let raw_position = imgData[imgName].position;
@@ -430,10 +428,13 @@ export class Images360Loader{
 	}
 
 	static createSceneNodes(images360){
+		while (images360.node.children.length > 0 && images360.node.children[1]) {
+        	images360.node.remove(images360.node.children[1]);
+    	}
 
 		for(let image360 of images360.images){
 			let {longitude, latitude, altitude} = image360;
-			let ringMesh = new THREE.Mesh(new THREE.RingGeometry( 0.35, .5, 32 ), new THREE.MeshBasicMaterial({side: THREE.DoubleSide, color:'#c03624'}));
+			let ringMesh = new THREE.Mesh(new THREE.RingGeometry( 0.35, .5, 32 ), new THREE.MeshBasicMaterial({side: THREE.DoubleSide, color:'#6941c6'}));
 			ringMesh.position.set(longitude, latitude, altitude - 2.0);
 			ringMesh.scale.set(1, 1, 1);
 			ringMesh.material.transparent = true;
@@ -452,6 +453,184 @@ export class Images360Loader{
 			image360.ringGroup=ringGroup
 			image360.ringGroup.visible=false;
 		}
+	}
+
+	static async loadImage(viewer,imgData, offset, isLocal = false, showRings = true, reversePan = false, target = undefined, onImageLoaded){
+		const tm_data = {
+			"tm": {
+				"elements": [
+						1,
+						0,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						0,
+						1
+				]
+			},
+		"offset": offset
+		};
+		if (!(this.instance && this.instance[viewer.renderArea.id])) {
+			this.instance = { ...(this.instance || {})};
+			this.instance[viewer.renderArea.id] = new Images360(viewer);
+		}
+		let images360 = this.instance[viewer.renderArea.id];
+		images360.showRings = showRings;
+		await Images360Loader.loadNodes(`${imgData.imgsUrl}.json`,imgData.imgsUrl,images360,tm_data,viewer,isLocal)
+		let file = `${imgData.imgsUrl}/${imgData.name}`;
+		const image360 = images360.images.find((im)=>(im.file === file))
+		images360.focus(image360, reversePan, true,target,onImageLoaded);
+		return images360;
+	}
+
+	static async loadNodes(url, imgsUrl, images360, tm_data, viewer, isLocal = false){
+
+		let tmatrix, toffset;
+		
+		tmatrix = tm_data.tm;
+		toffset = tm_data.offset;
+		if(images360.urls && images360.urls.includes(url)) return(images360);
+		viewer.scene.remove360Images(images360)
+		let response = await fetch(url); 
+		let text = await response.text();
+		let imgData = JSON.parse(text);
+		images360.urls = [ ...(images360.urls || []), url];
+		Object.keys(imgData).forEach(imgName => {
+			let raw_position = imgData[imgName].position;
+			let rotation = imgData[imgName].rotation;
+			let pos = new Vector4(raw_position[0], raw_position[1], raw_position[2], 1);
+			if (isLocal == true) {
+				pos = new Vector4(raw_position[0] * 1000, raw_position[1] * 1000, raw_position[2] * 1000, 1);
+			}
+			pos.applyMatrix4(tmatrix);
+			const long = parseFloat(pos.x - toffset[0]);
+			const lat = parseFloat(pos.y - toffset[1]);
+			const alt = parseFloat((pos.z - toffset[2]));
+			const course = parseFloat(rotation[0]);
+			const pitch = parseFloat(rotation[1]);
+			const roll = parseFloat(rotation[2]);
+			let file = `${imgsUrl}/${imgName}`;
+			let thumbnail = `${imgsUrl}/thumbnails/${imgName}`;
+			let image360 = new Image360(file, thumbnail, long, lat, alt, course, pitch, roll);
+			let position = [long, lat, alt];
+			image360.position = position;
+			images360.images.push(image360);
+		});
+
+		images360.images.sort(function (a, b) {
+			const getFileNumber = (file) => {
+				const numberPattern = /\d+/g;
+				const numbers = file.match(numberPattern);
+				if (numbers) {
+				return numbers.map((num) => num.padStart(10, '0')).join('');
+				}
+				return file;
+			};
+
+			const fileANumber = getFileNumber(a.file);
+			const fileBNumber = getFileNumber(b.file);
+			return fileANumber.localeCompare(fileBNumber);
+		});
+		Images360Loader.createSceneNodes(images360);
+		viewer.scene.add360Images(images360);
+		return images360;
+	}
+
+	static async loadImageFromData(viewer,imgData, offset, isLocal = false, showRings = true, reversePan = false, target = undefined, onImageLoaded){
+		const tm_data = {
+			"tm": {
+				"elements": [
+						1,
+						0,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						0,
+						1
+				]
+			},
+		"offset": offset
+		};
+		if (!(this.instance && this.instance[viewer.renderArea.id])) {
+			this.instance = { ...(this.instance || {})};
+			this.instance[viewer.renderArea.id] = new Images360(viewer);
+		}
+		let images360 = this.instance[viewer.renderArea.id];
+		images360.showRings = showRings;
+		await Images360Loader.loadNodesFromData(imgData.data.images,imgData.imgsUrl,images360,tm_data,viewer,isLocal);
+		let file = `${imgData.imgsUrl}/${imgData.name}`;
+		const image360 = images360.images.find((im)=>(im.file === file));
+		images360.focus(image360, reversePan, true,target,onImageLoaded);
+		return images360;
+	}
+
+	static async loadNodesFromData(imgData, imgsUrl, images360, tm_data, viewer, isLocal = false){
+
+		let tmatrix, toffset;
+		
+		tmatrix = tm_data.tm;
+		toffset = tm_data.offset;
+		if(images360.urls && images360.urls.includes(imgsUrl)) return(images360);
+		viewer.scene.remove360Images(images360);
+		images360.urls = [ ...(images360.urls || []), imgsUrl];
+		Object.keys(imgData).forEach(imgName => {
+			let raw_position = imgData[imgName].position;
+			let rotation = imgData[imgName].rotation;
+			let pos = new Vector4(raw_position[0], raw_position[1], raw_position[2], 1);
+			if (isLocal == true) {
+				pos = new Vector4(raw_position[0] * 1000, raw_position[1] * 1000, raw_position[2] * 1000, 1);
+			}
+			pos.applyMatrix4(tmatrix);
+			const long = parseFloat(pos.x - toffset[0]);
+			const lat = parseFloat(pos.y - toffset[1]);
+			const alt = parseFloat((pos.z - toffset[2]));
+			const course = parseFloat(rotation[0]);
+			const pitch = parseFloat(rotation[1]);
+			const roll = parseFloat(rotation[2]);
+			let file = `${imgsUrl}/${imgName}`;
+			let thumbnail = `${imgsUrl}/thumbnails/${imgName}`;
+			let image360 = new Image360(file, thumbnail, long, lat, alt, course, pitch, roll);
+			let position = [long, lat, alt];
+			image360.position = position;
+			images360.images.push(image360);
+		});
+
+		images360.images.sort(function (a, b) {
+			const getFileNumber = (file) => {
+				const numberPattern = /\d+/g;
+				const numbers = file.match(numberPattern);
+				if (numbers) {
+				return numbers.map((num) => num.padStart(10, '0')).join('');
+				}
+				return file;
+			};
+
+			const fileANumber = getFileNumber(a.file);
+			const fileBNumber = getFileNumber(b.file);
+			return fileANumber.localeCompare(fileBNumber);
+		});
+		Images360Loader.createSceneNodes(images360);
+		viewer.scene.add360Images(images360);
+		return images360;
+
 	}
 };
 
