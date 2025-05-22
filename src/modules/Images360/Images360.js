@@ -133,40 +133,66 @@ export class Images360 extends EventDispatcher{
 			image.ringGroup.visible=false
 		}
 		
-		if(index != 0)
-		{
+		//One ring on each side with 3m distance 
+		// if(index != 0)
+		// {
 
-			let i = index - 1
-			let current = new THREE.Vector3(this.images[index].position[0], this.images[index].position[1], this.images[index].position[2])
-			let next = new THREE.Vector3(this.images[i].position[0], this.images[i].position[1], this.images[i].position[2])
-			let dist = current.distanceTo(next)
-			while(dist < 3 && i > 0) {
-				i--
-				next = new THREE.Vector3(this.images[i].position[0], this.images[i].position[1], this.images[i].position[2])
-				dist = current.distanceTo(next)
-			}
-			if(i>-1)
-			{
-			this.images[i].ringGroup.visible = true
-			this.visibleRings.push(this.images[i])
-			}
+		// 	let i = index - 1;
+		// 	let current = new Vector3(this.images[index].position[0], this.images[index].position[1], this.images[index].position[2]);
+		// 	let next = new Vector3(this.images[i].position[0], this.images[i].position[1], this.images[i].position[2]);
+		// 	let dist = current.distanceTo(next);
+		// 	while(dist < 3 && i > 0) {
+		// 		i--;
+		// 		next = new Vector3(this.images[i].position[0], this.images[i].position[1], this.images[i].position[2]);
+		// 		dist = current.distanceTo(next);
+		// 	}
+		// 	if(i>-1)
+		// 	{
+		// 	this.images[i].ringGroup.visible = this.showRings ? true: false;
+		// 	this.visibleRings.push(this.images[i]);
+		// 	}
 			
-		}
-		if(index!=this.images.length-1)
-		{
-			let i = index + 1
-			let current = new THREE.Vector3(this.images[index].position[0], this.images[index].position[1], this.images[index].position[2])
-			let next = new THREE.Vector3(this.images[i].position[0], this.images[i].position[1], this.images[i].position[2])
-			let dist = current.distanceTo(next)
-			while(dist < 3 && i<this.images.length-1) {
-				i++
-				next = new THREE.Vector3(this.images[i].position[0], this.images[i].position[1], this.images[i].position[2])
-				dist = current.distanceTo(next)
+		// }
+		// if(index!=this.images.length-1)
+		// {
+		// 	let i = index + 1;
+		// 	let current = new Vector3(this.images[index].position[0], this.images[index].position[1], this.images[index].position[2]);
+		// 	let next = new Vector3(this.images[i].position[0], this.images[i].position[1], this.images[i].position[2]);
+		// 	let dist = current.distanceTo(next);
+		// 	while(dist < 3 && i<this.images.length-1) {
+		// 		i++;
+		// 		next = new Vector3(this.images[i].position[0], this.images[i].position[1], this.images[i].position[2]);
+		// 		dist = current.distanceTo(next);
+		// 	}
+		// 	if(i<this.images.length)
+		// 	{
+		// 	this.images[i].ringGroup.visible = this.showRings ? true: false;
+		// 	this.visibleRings.push(this.images[i]);	
+		// 	}
+		// }
+		
+		//	Two rings on each side without 3m distance
+		if(index != 0) {
+			let prevImages = [];
+			let i = index - 1;
+			if(i >= 0) prevImages.push(i);  // i-1
+			if(i-1 >= 0) prevImages.push(i-1);  // i-2
+			
+			for (let prevIndex of prevImages) {
+				this.images[prevIndex].ringGroup.visible = this.showRings ? true : false;
+				this.visibleRings.push(this.images[prevIndex]);
 			}
-			if(i<this.images.length)
-			{
-			this.images[i].ringGroup.visible = true
-			this.visibleRings.push(this.images[i])	
+		}
+
+		if(index != this.images.length - 1) {
+			let nextImages = [];
+			let i = index + 1;
+			if(i < this.images.length) nextImages.push(i);  // i+1
+			if(i+1 < this.images.length) nextImages.push(i+1);  // i+2
+
+			for (let nextIndex of nextImages) {
+				this.images[nextIndex].ringGroup.visible = this.showRings ? true : false;
+				this.visibleRings.push(this.images[nextIndex]);
 			}
 		}
 		this.selectingEnabled = true;
