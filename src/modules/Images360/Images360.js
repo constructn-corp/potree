@@ -54,7 +54,7 @@ export class Images360 extends EventDispatcher{
 
 		this.addEventListener("mousedown", () => {
 			if(this.currentlyHovered && this.currentlyHovered.image360){
-				this.focus(this.currentlyHovered.image360);
+				// this.focus(this.currentlyHovered.image360);
 				const event = new CustomEvent("onRingClick", {
                     detail: {
                         viewer: this.viewer,
