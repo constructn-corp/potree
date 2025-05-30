@@ -395,7 +395,7 @@ export class OrientedImageLoader {
 
     const moveToImage = async (image, sendEvent = true, type) => {
 			
-      if(type == 'droneImage') viewer.controls.enabled = true;
+      if(type == 'phoneImage') viewer.controls.enabled = true;
       else viewer.controls.enabled = false;
 
       const mesh = image.mesh;
