@@ -393,8 +393,10 @@ export class OrientedImageLoader {
       }
     };
 
-    const moveToImage = async (image, sendEvent = true) => {
-      viewer.controls.enabled = false;
+    const moveToImage = async (image, sendEvent = true, type) => {
+			
+      if(type == 'droneImage') viewer.controls.enabled = true;
+      else viewer.controls.enabled = false;
 
       const mesh = image.mesh;
       const target = image;
