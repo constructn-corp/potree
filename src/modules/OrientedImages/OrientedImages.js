@@ -483,7 +483,7 @@ export class OrientedImageLoader {
 		}
 
 		if (hoveredElement && !is360ImageLoaded) {
-			moveToImage(hoveredElement , hoveredElement?.id.split('_')[0]);
+			moveToImage(hoveredElement , true, hoveredElement?.id.split('_')[0]);
 		}
 	};
     viewer.renderer.domElement.addEventListener(
