@@ -483,7 +483,7 @@ export class OrientedImageLoader {
 		}
 
 		if (hoveredElement && !is360ImageLoaded) {
-			const parts = hoveredElement?.id.split('_')
+			const parts = hoveredElement.id.split('_')
 			if(parts.some(part => part.includes('phoneImage'))){
 				moveToImage(hoveredElement , true , 'phoneImage');
 			}
