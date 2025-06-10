@@ -304,7 +304,10 @@ export class Images360 extends EventDispatcher{
 								//var sphereMaterial = new MeshBasicMaterial({ map: texture, side: DoubleSide });
                             	//image360.texture = sphereMaterial;
 								// texture.magFilter = THREE.NearestFilter;
+								texture.colorSpace = THREE.SRGBColorSpace;
+								texture.magFilter = THREE.NearestFilter;
 								texture.minFilter = THREE.LinearFilter;
+								// texture.encoding = THREE.sRGBEncoding;
 								// texture.anisotropy = this.viewer.renderer.capabilities.getMaxAnisotropy();
 								image360.texture = texture;
 								if (this.sphere) {
