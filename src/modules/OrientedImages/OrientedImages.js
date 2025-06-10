@@ -483,7 +483,13 @@ export class OrientedImageLoader {
 		}
 
 		if (hoveredElement && !is360ImageLoaded) {
-			moveToImage(hoveredElement , true, hoveredElement?.id.split('_')[0]);
+			const parts = hoveredElement?.id.split('_')
+			if(parts.some(part => part.includes('phoneImage'))){
+				moveToImage(hoveredElement , true , 'phoneImage');
+			}
+			else{
+				moveToImage(hoveredElement , true , 'droneImage');
+			}
 		}
 	};
     viewer.renderer.domElement.addEventListener(
