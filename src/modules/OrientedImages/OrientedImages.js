@@ -355,10 +355,11 @@ export class OrientedImageLoader {
           camera.rotation.copy(img.mesh.rotation);
           {
             const mesh = img.mesh;
-            const dir = mesh.getWorldDirection();
+            const dir = new Vector3();
+	        	mesh.getWorldDirection(dir);
             const pos = mesh.position;
             const alpha = THREE.MathUtils.degToRad(fov / 2);
-            const d = 0.5 / MathUtils.tan(alpha);
+            const d = 0.5 / Math.tan(alpha);
             const newCamPos = pos.clone().add(dir.clone().multiplyScalar(d));
             const newCamDir = pos.clone().sub(newCamPos);
             const newCamTarget = new THREE.Vector3().addVectors(
